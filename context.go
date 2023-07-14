@@ -43,7 +43,10 @@ func (c *Context) Query(key string) string {
 }
 
 func (c *Context) PathParam(key string) string {
-	return c.RouteParamMap[key].(string)
+	if v, ok := c.RouteParamMap[key]; ok {
+		return v.(string)
+	}
+	return ""
 }
 
 func (c *Context) Status(code int) {
@@ -96,7 +99,7 @@ func (c *Context) FormFile(name string) (*multipart.FileHeader, error) {
 	return fh, err
 }
 
-// SaveUploadedFile uploads the form file to specific dst.
+//保存文件到指定目录
 func (c *Context) SaveUploadedFile(file *multipart.FileHeader, dst string) error {
 	src, err := file.Open()
 	if err != nil {
