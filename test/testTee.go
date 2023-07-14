@@ -78,7 +78,7 @@ func Testtee() {
 	e.GET("/yyq/yy6", UserController)
 	e.GET("/yyq/yy7", UserController)
 
-	tee.Start()
+	tee.Start("127.0.1:8082")
 }
 
 func HelloMiddle(c *tee.Context) {
