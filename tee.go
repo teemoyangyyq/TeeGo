@@ -66,7 +66,6 @@ func (curNode *TreeNode) Insert(routeStringSlice []string, index int, handlerInd
 	if curV == "/" {
 
 		curNode.PathParams[handlerIndex] = string([]byte(routeStringSlice[index])[1:])
-		fmt.Printf("curNode.PathParams[%d]=%s \n", handlerIndex, curNode.PathParams[handlerIndex])
 	}
 
 	// 路由插入前缀树完毕
