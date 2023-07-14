@@ -22,7 +22,7 @@ gin性能测试：
 
 测试代码：
 
-
+``` go
 func BenchmarkHi(b *testing.B) {
 	var validTests = []struct {
 		data string
@@ -89,3 +89,4 @@ func BenchmarkHi(b *testing.B) {
 		})
 	
 }
+```
