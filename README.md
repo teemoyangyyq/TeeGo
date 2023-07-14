@@ -90,3 +90,113 @@ func BenchmarkHi(b *testing.B) {
 	
 }
 ```
+
+
+路由用法：
+``` go
+package main
+
+import (
+	tee "teego/TeeGo"
+)
+
+//  测试代码
+
+func main() {
+	//  获取引擎
+	e := tee.NewEngine()
+	e.Use(HiMiddle)
+	v0 := e.Group("/tee")
+	{
+		v0.Use(HelloMiddle)
+		v1 := v0.Group("/api").Use(HiMiddle) //使用中间件
+		{
+			v1.Use(HelloMiddle)
+			
+			v1.POST("/api/:type/qq/:id", UserController)
+			v1.GET("/api/:id/qq", UserMiddle, UserController)
+			v5 := v1.Group("/hh")
+			{
+				v5.Use(HelloMiddle)
+				v5.GET("/api/qq", UserController)
+				
+			}
+		}
+		v2 := v0.Group("/service")
+		{
+			v2.GET("/api/:type/qqqqq", UserController)
+		}
+
+	}
+	v3 := e.Group("/yq")
+	{
+		
+		v3.GET("/yy7/:id", UserController)
+	}
+	e.GET("/tee/yyq/yy1", UserController)
+
+	tee.Start("127.0.0.1:8083")
+}
+
+func HelloMiddle(c *tee.Context) {
+	//fmt.Println("before hello")
+	c.Next()
+	//fmt.Println("after hello")
+}
+
+func HiMiddle(c *tee.Context) {
+	//fmt.Println("before hi")
+	c.Next()
+	//fmt.Println("after hi")
+}
+
+func UserMiddle(c *tee.Context) {
+	//fmt.Println("before UserMiddle")
+	c.Next()
+	//fmt.Println("after UserMiddle")
+
+}
+
+```
+
+获取参数：
+``` go
+// 浏览器输入  http://127.0.0.1:8083/tee/api/api/1/qq?name=yyq
+
+type ResData struct {
+	Name string
+	Id   int
+}
+
+
+func UserController(c *tee.Context) {
+        // 获取路径参数
+	idint := c.PathParamInt("id")
+        idstring := c.PathParamString("id")
+        idint64 :=  c.PathParamString("id")
+        // 获取请求参数
+        name ：= c.Query("name")
+        // 获取文件
+        file,_ ：= c.FormFile("fileName")
+        // 保存文件
+        c.SaveUploadedFile(file, "./tmp/"+file.Filename)
+	c.JSON( 200, map[string]interface{}{
+		"code": 0,
+		"msg":  "success",
+		"data": &ResData{
+			Id:   1,
+			Name: "杨云强",
+		},
+	})
+}
+```
+
+
+
+
+
+
+
+
+
+
