@@ -1,7 +1,6 @@
 package tee
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,25 +8,6 @@ import (
 )
 
 type Handler func(context *Context)
-
-// 上下文
-type Context struct {
-	Res           http.ResponseWriter    // 请求信息
-	Req           *http.Request          // 返回信息
-	RouteParamMap map[string]interface{} // 路径参数
-	HandlerSlice  []Handler              // 中间件，控制器方法数组
-	Index         int                    // 指定路由的当前执行的方法索引
-}
-
-// 进入对应路由的下一个方法
-func (c *Context) Next() {
-	c.Index++
-	for c.Index < len(c.HandlerSlice) {
-		c.HandlerSlice[c.Index](c)
-		c.Index++
-	}
-
-}
 
 // 通过引擎来控制路由前缀树入口
 type Engine struct {
@@ -84,7 +64,9 @@ func (curNode *TreeNode) Insert(routeStringSlice []string, index int, handlerInd
 	}
 	// 如果是路由参数，对应方法索引指向该路径参数
 	if curV == "/" {
+
 		curNode.PathParams[handlerIndex] = string([]byte(routeStringSlice[index])[1:])
+		fmt.Printf("curNode.PathParams[%d]=%s \n", handlerIndex, curNode.PathParams[handlerIndex])
 	}
 
 	// 路由插入前缀树完毕
@@ -109,7 +91,7 @@ func (curNode *TreeNode) Insert(routeStringSlice []string, index int, handlerInd
 // 要实现框架，需要实现监听的serveHTTP方法
 func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
-	routeString := req.RequestURI + req.Method
+	routeString := req.RequestURI + "/" + req.Method
 	if v, ok := routeMap[routeString]; ok {
 		handler, routeParam := v, make(map[string]interface{})
 		context := &Context{
@@ -203,7 +185,7 @@ func (curNode *TreeNode) Match(routeStringSlice []string, index int, RouteParamM
 		tempNode2 = v
 		isMatch, handlerIndex := tempNode2.Match(routeStringSlice, index+1, RouteParamMap)
 		if isMatch {
-			RouteParamMap[string(tempNode2.PathParams[handlerIndex])] = routeStringSlice[index]
+			RouteParamMap[tempNode2.PathParams[handlerIndex]] = routeStringSlice[index]
 			return isMatch, handlerIndex
 		}
 	}
@@ -270,42 +252,13 @@ func Start(address string) {
 }
 
 func (e *Engine) GET(routeName string, handlers ...Handler) {
-	e.AddRoute(routeName+"GET", handlers...)
+	e.AddRoute(routeName+"/GET", handlers...)
 }
 
 func (e *Engine) POST(routeName string, handlers ...Handler) {
-	e.AddRoute(routeName+"POST", handlers...)
+	e.AddRoute(routeName+"/POST", handlers...)
 }
 
 func (e *Engine) DELETE(routeName string, handlers ...Handler) {
-	e.AddRoute(routeName+"DELETE", handlers...)
-}
-
-func (c *Context) SetHeader(key string, value string) {
-	c.Res.Header().Set(key, value)
-}
-
-func (c *Context) String(format string, values ...interface{}) {
-	c.SetHeader("Content-Type", "text/plain")
-	_, err := c.Res.Write([]byte(fmt.Sprintf(format, values...)))
-	if err != nil {
-		log.Fatal("Write error")
-	}
-}
-
-func (c *Context) JSON(obj interface{}) {
-	c.SetHeader("Content-Type", "application/json")
-
-	encoder := json.NewEncoder(c.Res)
-	if err := encoder.Encode(obj); err != nil {
-		http.Error(c.Res, err.Error(), 500)
-	}
-}
-
-func (c *Context) HTML(html string) {
-	c.SetHeader("Content-Type", "text/html")
-	_, err := c.Res.Write([]byte(html))
-	if err != nil {
-		log.Fatal("Write error")
-	}
+	e.AddRoute(routeName+"/DELETE", handlers...)
 }
