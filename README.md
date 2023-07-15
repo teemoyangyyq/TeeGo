@@ -175,9 +175,9 @@ func UserController(c *tee.Context) {
         idstring := c.PathParamString("id")
         idint64 :=  c.PathParamString("id")
         // 获取请求参数
-        name ：= c.Query("name")
+        name := c.Query("name")
         // 获取文件
-        file,_ ：= c.FormFile("fileName")
+        file, _ := c.FormFile("fileName")
         // 保存文件
         c.SaveUploadedFile(file, "./tmp/"+file.Filename)
 	c.JSON( 200, map[string]interface{}{
