@@ -2,7 +2,7 @@ package main
 
 import (
 	
-	tee "teego/TeeGo"
+	tee "teego"
 )
 
 //  测试代码
