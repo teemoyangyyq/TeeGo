@@ -1,7 +1,6 @@
 package tee
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
