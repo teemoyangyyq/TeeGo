@@ -18,9 +18,9 @@ iris性能测试：
 
 gin性能测试：
 ![036bea6e7ae7ea0ee792dc59569fd50](https://github.com/teemoyangyyq/TeeGo/assets/33918440/2ad6c913-c16c-4f39-bb67-9d8f7de15371)
+测试文件在test/目录下，三个一模一样的路由注册，分别是teego, iris,  gin,拥有相同控制器方法，中间件，为了测试性能，这些方法内什么操作都没有，仅仅测试框架路由分发性能
 
-
-测试代码：
+性能测试代码：
 
 ``` go
 func BenchmarkHi(b *testing.B) {
