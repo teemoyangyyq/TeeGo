@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 type Handler func(context *Context)
@@ -14,6 +15,7 @@ type Engine struct {
 	// 的是前缀树对应的当前路由，group后添加的路由，从当前节点开始添加
 	RootNode     *TreeNode   // 路由根节点
 	HandlerSlice [][]Handler // 中间件，控制器方法数组
+	pool             sync.Pool
 }
 
 // 前缀树节点，比如路由为/tee/api/:type/qq，那么路由会拆解成tee，api，:type，qq，四个节点,
@@ -25,8 +27,7 @@ type TreeNode struct {
 	// value为带有路径参数的url
 	End      bool      // 是否是路url由的重点
 	Index    int       // 当前执行的路由方法索引
-	Handlers []Handler // 当前节点url对应的中间件
-
+	PreIndex int       // 当前节点url对应的中间件
 	PreGroupNode *TreeNode // 当前节点指向的上一个节点
 }
 
@@ -37,7 +38,7 @@ var Root = &TreeNode{
 	PathUrl: make(map[string]*TreeNode),
 }
 
-var Estart = NewEngine()
+var Estart = GetNewEngine()
 
 // 插入一个前缀树路由
 func (curNode *TreeNode) Insert(routeStringSlice []string, index int, handlerIndex int, preCurNode *TreeNode) *TreeNode {
@@ -92,34 +93,36 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	routeString := req.RequestURI + "/" + req.Method
 	if v, ok := routeMap[routeString]; ok {
 		handler, routeParam := v, make(map[string]interface{})
-		context := &Context{
-			Req:           req,
-			Res:           w,
-			RouteParamMap: routeParam,
-			Index:         -1,
-			HandlerSlice:  handler,
-		}
+		context := Estart.pool.Get().(*Context)
+		context.Req =         req
+		context.Res	 = w
+		context.RouteParamMap = routeParam
+		context.Index =       -1
+		context.HandlerSlice = handler
 		context.Next()
 		w = context.Res
+		Estart.pool.Put(context)
 	} else {
 		isMatch, handler, routeParam := e.MatchRoute(routeString)
 		if !isMatch {
 			return
 		}
-		context := &Context{
-			Req:           req,
-			Res:           w,
-			RouteParamMap: routeParam,
-			Index:         -1,
-			HandlerSlice:  handler,
-		}
+		context := Estart.pool.Get().(*Context)
+		context.Req =         req
+		context.Res	 = w
+		context.RouteParamMap = routeParam
+		context.Index =       -1
+		context.HandlerSlice = handler
+		
 		context.Next()
 		w = context.Res
-
+		Estart.pool.Put(context)
 	}
+	
 	// 获取匹配路由方法
 
 }
+
 
 // 注册路由组到前缀树
 func (e *Engine) Group(routeString string) *Engine {
@@ -154,7 +157,14 @@ func (e *Engine) MatchRoute(routeString string) (bool, []Handler, map[string]int
 
 // 使用中间件
 func (e *Engine) Use(handlers ...Handler) *Engine {
-	e.CurNode.Handlers = append(e.CurNode.Handlers, handlers...)
+	
+	if e.CurNode.PreIndex != 0 {
+		Estart.HandlerSlice[e.CurNode.PreIndex-1] = append(Estart.HandlerSlice[e.CurNode.PreIndex-1], handlers...) 
+	}else {
+		Estart.HandlerSlice = append(Estart.HandlerSlice, handlers)
+		e.CurNode.PreIndex = len(Estart.HandlerSlice)
+	}
+	
 	return e
 }
 
@@ -204,18 +214,28 @@ func NewEngine() *Engine {
 		HandlerSlice: make([][]Handler, 0),
 		RootNode:     Root,
 		CurNode:      Root,
+		
 	}
+	
+}
+
+func GetNewEngine() *Engine{
+	e := NewEngine()
+	e.pool.New = func() interface{} {
+		return &Context{}
+	}
+	return e
 }
 
 func RouteInit(root *TreeNode, routeSlice []string, mode bool) {
 
 	if root.End {
 		Estart.HandlerSlice[root.Index-1] = append(CallBackTreeNode(root), Estart.HandlerSlice[root.Index-1]...)
-		if mode == true {
+		if mode {
 			routeMap["/"+strings.Join(routeSlice, "/")] = Estart.HandlerSlice[root.Index-1]
 		}
 	}
-
+    
 	for k, v := range root.PathUrl {
 		if k != "/" {
 			RouteInit(v, routeSlice, mode)
@@ -226,11 +246,50 @@ func RouteInit(root *TreeNode, routeSlice []string, mode bool) {
 	}
 }
 
+func RouteDelete(root *TreeNode, routeSlice []string, mode bool) bool {
+
+	if root.End {
+		Estart.HandlerSlice[root.Index-1] = append(CallBackTreeNode(root), Estart.HandlerSlice[root.Index-1]...)
+		if mode {
+			if root.PreIndex > 0 {
+				Estart.HandlerSlice[root.PreIndex-1] = nil
+			}
+			root = nil			
+			return true
+		}
+		return false
+	}
+    
+	isDelete := true
+	for k, v := range root.PathUrl {
+		if k != "/" {
+		    isDelete = isDelete && RouteDelete(v, routeSlice, mode)		
+		} else {
+			RouteDelete(v, routeSlice, false)
+		    isDelete = false
+		}
+
+	}
+	if isDelete {
+		if root.PreIndex > 0 {
+			Estart.HandlerSlice[root.PreIndex-1] = nil
+		}
+         root = nil
+	}
+	return isDelete
+}
+
+
+
 func CallBackTreeNode(node *TreeNode) []Handler {
 	if node == nil {
 		return nil
 	}
-	handlers := append(CallBackTreeNode(node.PreGroupNode), node.Handlers...)
+	var handlers []Handler
+	if node.PreIndex > 0{
+		handlers= Estart.HandlerSlice[node.PreIndex-1]
+	}
+	handlers = append(CallBackTreeNode(node.PreGroupNode), handlers...)
 	return handlers
 }
 
