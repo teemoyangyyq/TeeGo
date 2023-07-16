@@ -192,6 +192,57 @@ func UserController(c *tee.Context) {
 ```
 
 
+使用日志：
+``` go
+package main
+
+import (
+	"fmt"
+	tee "teego"
+)
+
+//  测试代码
+
+func Testtee() {
+	//  获取引擎
+	e := tee.NewEngine()
+	e.Use(tee.TeeLogger())  // 使用日志
+	e.GET("/yyq/yy7", UserController)
+
+	tee.Start("127.0.0.1:8082")
+}
+
+func HelloMiddle(c *tee.Context) {
+	//fmt.Println("before HelloMiddle")
+	c.Next()
+	//fmt.Println("after HelloMiddle")
+}
+
+func HiMiddle(c *tee.Context) {
+	//fmt.Println("before HiMiddle")
+	c.Next()
+//	fmt.Println("after HiMiddle")
+}
+
+func UserMiddle(c *tee.Context) {
+	
+	//fmt.Println("before UserMiddle")
+	c.Next()
+	//fmt.Println("after UserMiddle")
+
+}
+func UserController(c *tee.Context) {
+	 fmt.Println("controller UserController")
+         tee.LogGet(c).Info("1234567=====")
+	c.Res.Write([]byte(c.Req.RequestURI))
+	
+}
+
+func main() {
+	Testtee()
+}
+```
+
 
 
 
