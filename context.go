@@ -148,8 +148,11 @@ func (c *Context) PostForm(key string) string {
 
 // GetTraceID 获取用户请求标识
 func GetTraceID(ctx *Context) string {
-	id, _ := ctx.Get(TraceIDKey)
-	return id.(string)
+	id,  exists := ctx.Get(TraceIDKey)
+	if exists {
+	   return id.(string)
+	}
+	return ""
 }
 
 func (c *Context) Get(key string) (value any, exists bool) {
