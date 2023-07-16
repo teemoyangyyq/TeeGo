@@ -42,13 +42,21 @@ func (c *Context) Query(key string) string {
 	return c.Req.URL.Query().Get(key)
 }
 
-func (c *Context) PathParam(key string) string {
+func (c *Context) PathParam(key string) interface{} {
 	if v, ok := c.RouteParamMap[key]; ok {
-		return v.(string)
+		return v
 	}
-	return ""
+	return nil
 }
-
+func (c *Context) PathParamInt(key string) int {
+	return c.PathParam(key).(int)
+}
+func (c *Context) PathParamInt64(key string) int64 {
+	return c.PathParam(key).(int64)
+}
+func (c *Context) PathParamString(key string) string {
+	return c.PathParam(key).(string)
+}
 func (c *Context) Status(code int) {
 	c.StatusCode = code
 	c.Res.WriteHeader(code)
@@ -63,6 +71,8 @@ func (c *Context) String(code int, format string, values ...interface{}) {
 	c.Status(code)
 	c.Res.Write([]byte(fmt.Sprintf(format, values...)))
 }
+
+
 
 func (c *Context) JSON(code int, obj interface{}) {
 	c.SetHeader("Content-Type", "application/json")
