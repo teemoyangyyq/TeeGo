@@ -157,7 +157,7 @@ func RecoveryWithWriter(c *Context, err interface{}) {
 	}
 
 	//panic转Error级别日志
-	LogGet(c).WithField("is_panic", true).Error(err)
+//	LogGet(c).WithField("is_panic", true).Error(err)
 
 	// If the connection is dead, we can't write a status to it.
 	if brokenPipe {
@@ -209,11 +209,11 @@ func TeeLogger() Handler {
 
 		c.Set(STARTMICROTIME, time.Now().UnixNano()/1000000)
 
-		defer func() {
-			if err := recover(); err != nil {
-				RecoveryWithWriter(c, err)
-			}
-		}()
+		// defer func() {
+		// 	if err := recover(); err != nil {
+		// 		RecoveryWithWriter(c, err)
+		// 	}
+		// }()
 
 		path := c.Req.URL.Path
 		method := c.Req.Method
@@ -224,9 +224,7 @@ func TeeLogger() Handler {
 			path = path + "?" + raw
 		}
 
-		bWriter := &bodyWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Res}
-		c.Res = bWriter
-
+	
 		//Trace
 		traceID := WithTraceID(c)
 		WithStartTime(c, start)
@@ -252,7 +250,7 @@ func TeeLogger() Handler {
 		param.BodySize = c.Size
 		param.UserAgent = c.Req.UserAgent()
 
-		param.getBody(c, bWriter.body.Bytes())
+		param.getBody(c,[]byte(""))
 
 		param.LogFormatter()
 	}
