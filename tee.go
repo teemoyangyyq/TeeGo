@@ -15,7 +15,10 @@ type Engine struct {
 	// 的是前缀树对应的当前路由，group后添加的路由，从当前节点开始添加
 	RootNode     *TreeNode   // 路由根节点
 	HandlerSlice [][]Handler // 中间件，控制器方法数组
-	pool             sync.Pool
+	pool         sync.Pool
+	PathParams   map[int]string
+	PreIndex     int
+	PreEngine    *Engine
 }
 
 // 前缀树节点，比如路由为/tee/api/:type/qq，那么路由会拆解成tee，api，:type，qq，四个节点,
@@ -25,10 +28,11 @@ type TreeNode struct {
 	UrlValue   string               // 当前路由url，例如api或qq
 	PathParams map[int]string       // 当前路由为:type,:id等路径方式，存储参数，key为带有路由对应发放，
 	// value为带有路径参数的url
-	End      bool      // 是否是路url由的重点
-	Index    int       // 当前执行的路由方法索引
-	PreIndex int       // 当前节点url对应的中间件
+	End          bool      // 是否是路url由的重点
+	Index        int       // 当前执行的路由方法索引
+	PreIndex     int       // 当前节点url对应的中间件
 	PreGroupNode *TreeNode // 当前节点指向的上一个节点
+	PreEngine    *Engine
 }
 
 var routeMap = make(map[string][]Handler)
@@ -41,7 +45,7 @@ var Root = &TreeNode{
 var Estart = GetNewEngine()
 
 // 插入一个前缀树路由
-func (curNode *TreeNode) Insert(routeStringSlice []string, index int, handlerIndex int, preCurNode *TreeNode) *TreeNode {
+func (curNode *TreeNode) Insert(routeStringSlice []string, index int, handlerIndex int, e *Engine) *TreeNode {
 	curV := routeStringSlice[index]
 	// 路径参数,保存为 /
 	if []byte(routeStringSlice[index])[0] == ':' {
@@ -70,7 +74,7 @@ func (curNode *TreeNode) Insert(routeStringSlice []string, index int, handlerInd
 
 	// 路由插入前缀树完毕
 	if index+1 == len(routeStringSlice) {
-		curNode.PreGroupNode = preCurNode
+
 		// 如果是group，代表路由还没结束
 		if handlerIndex == 0 && !curNode.End {
 			curNode.End = false
@@ -78,12 +82,13 @@ func (curNode *TreeNode) Insert(routeStringSlice []string, index int, handlerInd
 			return curNode
 		}
 		// 如果是addRoute，代表路由到此结束，End设置为true，并保存路由索引
+		curNode.PreEngine = e
 		curNode.End = true
 		curNode.Index = handlerIndex
 		return curNode
 	}
 
-	return curNode.Insert(routeStringSlice, index+1, handlerIndex, preCurNode)
+	return curNode.Insert(routeStringSlice, index+1, handlerIndex, e)
 
 }
 
@@ -91,53 +96,64 @@ func (curNode *TreeNode) Insert(routeStringSlice []string, index int, handlerInd
 func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	routeString := req.RequestURI + "/" + req.Method
+	
 	if v, ok := routeMap[routeString]; ok {
 		handler, routeParam := v, make(map[string]interface{})
 		context := Estart.pool.Get().(*Context)
-		context.Req =         req
-		context.Res	 = w
+		context.Req = req
+		context.Res = w
 		context.RouteParamMap = routeParam
-		context.Index =       -1
+		context.Index = -1
 		context.HandlerSlice = handler
 		context.Next()
 		w = context.Res
 		Estart.pool.Put(context)
 	} else {
-		isMatch, handler, routeParam := e.MatchRoute(routeString)
+		isMatch, handler, routeParam := Estart.MatchRoute(routeString)
 		if !isMatch {
 			return
 		}
 		context := Estart.pool.Get().(*Context)
-		context.Req =         req
-		context.Res	 = w
+		context.Req = req
+		context.Res = w
 		context.RouteParamMap = routeParam
-		context.Index =       -1
+		context.Index = -1
 		context.HandlerSlice = handler
-		
+
 		context.Next()
 		w = context.Res
 		Estart.pool.Put(context)
 	}
-	
+
 	// 获取匹配路由方法
 
 }
 
-
 // 注册路由组到前缀树
 func (e *Engine) Group(routeString string) *Engine {
-	return e.GroupHandleIndex(routeString, 0, e.CurNode)
+	return e.GroupHandleIndex(routeString, 0)
 }
 
 // 路由注册方法
-func (e *Engine) GroupHandleIndex(routeString string, handleIndex int, preNode *TreeNode) *Engine {
+func (e *Engine) GroupHandleIndex(routeString string, handleIndex int) *Engine {
 	routeStringSlice := strings.Split(routeString, "/")
-	newE := &Engine{
-		CurNode:  e.CurNode,
-		RootNode: Root,
+	start := 0
+	end := len(routeStringSlice)
+	if len(routeStringSlice[start]) == 0 {
+		start = 1
 	}
+	if len(routeStringSlice[end-1]) == 0 {
+		end = end - 1
+	}
+
+	newE := &Engine{
+		CurNode:   e.CurNode,
+		RootNode:  Root,
+		PreEngine: e,
+	}
+
 	// 插入前缀路由，返回新的引擎
-	newE.CurNode = newE.CurNode.Insert(routeStringSlice, 1, handleIndex, preNode)
+	newE.CurNode = newE.CurNode.Insert(routeStringSlice[start:end], 0, handleIndex, newE)
 	return newE
 }
 
@@ -157,14 +173,14 @@ func (e *Engine) MatchRoute(routeString string) (bool, []Handler, map[string]int
 
 // 使用中间件
 func (e *Engine) Use(handlers ...Handler) *Engine {
-	
-	if e.CurNode.PreIndex != 0 {
-		Estart.HandlerSlice[e.CurNode.PreIndex-1] = append(Estart.HandlerSlice[e.CurNode.PreIndex-1], handlers...) 
-	}else {
+
+	if e.PreIndex != 0 {
+		Estart.HandlerSlice[e.PreIndex-1] = append(Estart.HandlerSlice[e.PreIndex-1], handlers...)
+	} else {
 		Estart.HandlerSlice = append(Estart.HandlerSlice, handlers)
-		e.CurNode.PreIndex = len(Estart.HandlerSlice)
+		e.PreIndex = len(Estart.HandlerSlice)
 	}
-	
+
 	return e
 }
 
@@ -202,10 +218,9 @@ func (curNode *TreeNode) Match(routeStringSlice []string, index int, RouteParamM
 
 // 增加路由
 func (e *Engine) AddRoute(routeName string, handler ...Handler) *Engine {
-
-	//fmt.Printf("len(e.CurNode.Handlers )= %d \n",len(e.CurNode.Handlers))
+	
 	Estart.HandlerSlice = append(Estart.HandlerSlice, handler)
-	e = e.GroupHandleIndex(routeName, len(Estart.HandlerSlice), e.CurNode)
+	e = e.GroupHandleIndex(routeName, len(Estart.HandlerSlice))
 	return e
 }
 
@@ -214,12 +229,11 @@ func NewEngine() *Engine {
 		HandlerSlice: make([][]Handler, 0),
 		RootNode:     Root,
 		CurNode:      Root,
-		
 	}
-	
+
 }
 
-func GetNewEngine() *Engine{
+func GetNewEngine() *Engine {
 	e := NewEngine()
 	e.pool.New = func() interface{} {
 		return &Context{}
@@ -228,74 +242,72 @@ func GetNewEngine() *Engine{
 }
 
 func RouteInit(root *TreeNode, routeSlice []string, mode bool) {
-
+	if root == nil {
+		return
+	}
 	if root.End {
-		Estart.HandlerSlice[root.Index-1] = append(CallBackTreeNode(root), Estart.HandlerSlice[root.Index-1]...)
+		Estart.HandlerSlice[root.Index-1] = append(CallBackTreeNode(root.PreEngine), Estart.HandlerSlice[root.Index-1]...)
+
 		if mode {
 			routeMap["/"+strings.Join(routeSlice, "/")] = Estart.HandlerSlice[root.Index-1]
 		}
+		
 	}
-    
+
 	for k, v := range root.PathUrl {
 		if k != "/" {
-			RouteInit(v, routeSlice, mode)
+			RouteInit(v, append(routeSlice, k), mode)
 		} else {
-			RouteInit(v, routeSlice, false)
+			RouteInit(v, append(routeSlice, k), false)
 		}
 
 	}
 }
 
-func RouteDelete(root *TreeNode, routeSlice []string, mode bool) bool {
+func RouteDelete(root *TreeNode, mode bool) {
 
 	if root.End {
-		Estart.HandlerSlice[root.Index-1] = append(CallBackTreeNode(root), Estart.HandlerSlice[root.Index-1]...)
-		if mode {
-			if root.PreIndex > 0 {
-				Estart.HandlerSlice[root.PreIndex-1] = nil
+		e := root.PreEngine
+		if e != nil {
+			if e.PreIndex > 0 {
+				Estart.HandlerSlice[e.PreIndex-1] = nil
 			}
-			root = nil			
-			return true
+			e = e.PreEngine
 		}
-		return false
+		if mode {
+			root = nil
+		}
+		return
 	}
-    
-	isDelete := true
+
 	for k, v := range root.PathUrl {
 		if k != "/" {
-		    isDelete = isDelete && RouteDelete(v, routeSlice, mode)		
+			RouteDelete(v, mode)
 		} else {
-			RouteDelete(v, routeSlice, false)
-		    isDelete = false
+			RouteDelete(v, false)
+
 		}
 
 	}
-	if isDelete {
-		if root.PreIndex > 0 {
-			Estart.HandlerSlice[root.PreIndex-1] = nil
-		}
-         root = nil
-	}
-	return isDelete
+
 }
 
-
-
-func CallBackTreeNode(node *TreeNode) []Handler {
-	if node == nil {
+func CallBackTreeNode(e *Engine) []Handler {
+	if e == nil {
 		return nil
 	}
 	var handlers []Handler
-	if node.PreIndex > 0{
-		handlers= Estart.HandlerSlice[node.PreIndex-1]
+	if e.PreIndex > 0 {
+		handlers = Estart.HandlerSlice[e.PreIndex-1]
 	}
-	handlers = append(CallBackTreeNode(node.PreGroupNode), handlers...)
+	handlers = append(CallBackTreeNode(e.PreEngine), handlers...)
 	return handlers
 }
 
 // 启动程序，监听http方法
 func Start(address string) {
 	RouteInit(Root, nil, true)
+	RouteDelete(Root, true)
 	srv := &http.Server{
 		Addr:         address,
 		Handler:      Estart,
