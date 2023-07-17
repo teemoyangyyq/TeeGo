@@ -93,9 +93,6 @@ func UserMiddleIris(c iris.Context) {
 	c.Next()
 }
 func UserControllerIris(c iris.Context) {
-	
-	
-	c.Write([]byte("hh"))
 }
 
 // func main() {
