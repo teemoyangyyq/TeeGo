@@ -108,9 +108,7 @@ func UserMiddlegin(c*gin.Context) {
 
 }
 func UserControllergin(c*gin.Context) {
-
 	
-	c.Writer.Write([]byte("hh"))
 }
 
 // func main(){
