@@ -94,7 +94,7 @@ func UserMiddle(c *tee.Context) {
 	
 }
 func UserController(c *tee.Context) {	
-	c.Res.Write([]byte("hh"))
+	
 }
 
 // func main(){
