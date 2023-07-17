@@ -1,23 +1,25 @@
 # TeeGo
 
-teeGo是类似gin的一个极简框架，性能是gin的3倍，是iris的1.07倍
+teeGo是类似gin的一个极简框架，路由分发性能是gin的3倍，是iris的1.6倍
 
 
 teeGo支持路径参数
 
 
-teeGo性能测试：
-![a7da04c8ce648f4301077c6bf92b339](https://github.com/teemoyangyyq/TeeGo/assets/33918440/ec019825-2efa-4fb7-a704-3269cfaa957a)
+teeGo性能测试：![image](https://github.com/teemoyangyyq/TeeGo/assets/33918440/56692b2a-70ae-4266-99d3-2d724a54a8a3)
 
 
 
-iris性能测试：
-![539c8dc6e4f84ae91b4d883ecdd132d](https://github.com/teemoyangyyq/TeeGo/assets/33918440/09eebac4-8933-45a5-94ae-585265eb3f26)
+
+
+iris性能测试：![image](https://github.com/teemoyangyyq/TeeGo/assets/33918440/3a19e17c-0468-47b5-bb40-75c618e32508)
 
 
 
-gin性能测试：
-![036bea6e7ae7ea0ee792dc59569fd50](https://github.com/teemoyangyyq/TeeGo/assets/33918440/2ad6c913-c16c-4f39-bb67-9d8f7de15371)
+
+gin性能测试：![image](https://github.com/teemoyangyyq/TeeGo/assets/33918440/0ee57c26-10cb-457c-b0c0-5a2ea3773551)
+
+
 测试文件在test/目录下，三个一模一样的路由注册，分别是teego, iris,  gin,拥有相同控制器方法，中间件，为了测试性能，这些方法内什么操作都没有，仅仅测试框架路由分发性能
 
 性能测试代码：
