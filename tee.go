@@ -34,7 +34,7 @@ type TreeNode struct {
 	End          bool      // 是否是路url由的重点
 	Index        int       // 当前执行的路由方法索引
 	PreIndex     int       // 当前节点url对应的中间件
-	PreGroupNode *TreeNode // 当前节点指向的上一个节点
+	
 	PreEngine    *Engine
 }
 
@@ -62,7 +62,7 @@ func (curNode *TreeNode) Insert(routeStringSlice []string, index int, handlerInd
 		newNode := &TreeNode{
 			PathUrl:      make(map[string]*TreeNode),
 			UrlValue:     curV,
-			PreGroupNode: curNode,
+			
 		}
 
 		// 上一个节点的map指向刚创建的节点
