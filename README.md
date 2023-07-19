@@ -48,7 +48,8 @@ teeGo是类似gin的一个极简框架，路由分发性能是gin的3倍，是ir
 
     3.每一个Engine会存储路径参数名称和父亲Engine（取名PreEngine）
 
-![切片 2](https://github.com/teemoyangyyq/TeeGo/assets/33918440/b3d28c66-c305-4a19-b21a-b2b986cfbc53)
+![切片 3](https://github.com/teemoyangyyq/TeeGo/assets/33918440/20175d27-5ab9-4921-ba49-bced5f258d4d)
+
 
 
 
