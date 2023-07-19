@@ -9,7 +9,7 @@ teeGo是类似gin的一个极简框架，路由分发性能是gin的3倍，是ir
 ## 优化点：
 ### 第一点优化： 
 &#x0009;假设有三个路由 /task/:type/service/url/list, /task/:id/service/url/info, /task/:id/service/url/tag,
-浏览器输入请求路径为/task/1/service/url/tag，会匹配路由/task/:id/service/url/tag，如果前缀树如下所示，那么路由查找的时候，在匹配了task之后，:type和：id都会被匹配，之后还会分别匹配后面的service，会分两条路径进行匹配。我们发现这样的匹配会有多余匹。，因为本来我只会匹配/task/:id/service/url/tag，结果是我即匹配/task/:type/service/url/，也匹配/task/:id/service/url，只有匹配到最后的叶子节点才发现不匹配。怎么解决产生的多余匹配问题，teego框架已经给出方案，
+浏览器输入请求路径为/task/1/service/url/tag，会匹配路由/task/:id/service/url/tag，如果前缀树如下图所示，那么路由查找的时候，在匹配了task之后，:type和：id都会被匹配，之后还会分别匹配后面的service，会分两条路径进行匹配。我们发现这样的匹配会有多余匹配。因为本来我只会匹配/task/:id/service/url/tag，结果是我即匹配/task/:type/service/url/，也匹配/task/:id/service/url，只有匹配到最后的叶子节点才发现不匹配。怎么解决产生的多余匹配问题，teego框架已经给出方案。
 ​
 ​
 ![image](https://github.com/teemoyangyyq/TeeGo/assets/33918440/ee6bee1c-9e6d-4360-ad98-2dddf3f93441)
@@ -18,10 +18,15 @@ teeGo是类似gin的一个极简框架，路由分发性能是gin的3倍，是ir
 比如浏览器输入请求路径为/task/1/service/url/tag， 我们在控制器里获取id是为1，获取type就是空，因为路由上对应的是:id，而不是:type。解决思路如下，每个路由的插入的前缀树叶子节点肯定不同，如果叶子节点相同，代表输入url会匹配两个路由，就会有问题。所以我们可以个给每个路由叶子节点一个索引，通过这个索引，我们是可以知道这个完整路由，从而拿到注册路由的路径参数名
 
 
+![image](https://github.com/teemoyangyyq/TeeGo/assets/33918440/20c633fe-c18e-4356-843b-4608bbbbaf2a)
+
 ### 第二点优化：
 &#x0009;对于/task/service/url/list, /task//service/url/info/:id, /task/service/url/tag,这三个路由，当浏览器输入 请求路径为/task/service/url/tag，那么需要四次匹配，分别匹配task，service，url，tag，这个时候对于没有路径参数的路由其实我们可以存个map，key为/task/service/url/tag，value为对应执行方法，这样可以一次匹配到位。对于有路径参数的，就只能一一匹配了
+
+
 ​
-![image](https://github.com/teemoyangyyq/TeeGo/assets/33918440/20c633fe-c18e-4356-843b-4608bbbbaf2a)
+![image](https://github.com/teemoyangyyq/TeeGo/assets/33918440/0e272d8a-cef7-48c8-92d2-695db7c6530e)
+
 
 
 ### 第三点优化：
