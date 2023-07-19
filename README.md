@@ -8,7 +8,7 @@ teeGo支持路径参数
 路由匹配算法一般使用前缀树进行匹配，如何优化匹配算法
 ## 优化点：
 ### 第一点优化： 
-假设有三个路由 /task/:type/service/url/list, /task/:id/service/url/info, /task/:id/service/url/tag,
+nbsp;nbsp;假设有三个路由 /task/:type/service/url/list, /task/:id/service/url/info, /task/:id/service/url/tag,
 浏览器输入请求路径为/task/1/service/url/tag，会匹配路由/task/:id/service/url/tag，如果前缀树如下所示，那么路由查找的时候，在匹配了task之后，:type和：id都会被匹配，之后还会分别匹配后面的service，会分两条路径进行匹配。我们发现这样的匹配会有多余匹。，因为本来我只会匹配/task/:id/service/url/tag，结果是我即匹配/task/:type/service/url/，也匹配/task/:id/service/url，只有匹配到最后的叶子节点才发现不匹配。怎么解决产生的多余匹配问题，teego框架已经给出方案，
 ​
 
@@ -21,11 +21,12 @@ teeGo支持路径参数
 ### 第二点优化：
 对于/task/service/url/list, /task//service/url/info/:id, /task/service/url/tag,这三个路由，当浏览器输入 请求路径为/task/service/url/tag，那么需要四次匹配，分别匹配task，service，url，tag，这个时候对于没有路径参数的路由其实我们可以存个map，key为/task/service/url/tag，value为对应执行方法，这样可以一次匹配到位。对于有路径参数的，就只能一一匹配了
 ​
-### 第三点优化：
-其实我们匹配到路由后，会获取上面我们所说的路由索引。 以这个索引为key，直接存储该路由的所有执行方法和路径参数，这样匹配后，我们拿到路由索引，直接在一个全局map中获取执行方法和路径参数返回和执行
+
 
 ![image](https://github.com/teemoyangyyq/TeeGo/assets/33918440/20c633fe-c18e-4356-843b-4608bbbbaf2a)
 
+### 第三点优化：
+其实我们匹配到路由后，会获取上面我们所说的路由索引。 以这个索引为key，直接存储该路由的所有执行方法和路径参数，这样匹配后，我们拿到路由索引，直接在一个全局map中获取执行方法和路径参数返回和执行
 
 ### 路由匹配算法：
 ``` go
