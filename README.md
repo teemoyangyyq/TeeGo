@@ -3,7 +3,7 @@
 teeGo是类似gin的一个极简框架，路由分发性能是gin的3倍，是iris的1.6倍
 
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;teeGo支持路径参数
+teeGo支持路径参数
 ## 背景
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;路由匹配算法一般使用前缀树进行匹配，如何优化匹配算法
 ## 优化点：
