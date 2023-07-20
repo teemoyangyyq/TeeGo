@@ -10,6 +10,7 @@ teeGo是类似gin的一个极简框架，路由分发性能是gin的3倍，是ir
 ### 第一点优化： 
 &#x0009;假设有三个路由 /task/:type/service/url/list, /task/:id/service/url/info, /task/:id/service/url/tag,
 浏览器输入请求路径为/task/1/service/url/tag，会匹配路由/task/:id/service/url/tag，如果前缀树如下图所示，那么路由查找的时候，在匹配了task之后，:type和：id都会被匹配，之后还会分别匹配后面的service，会分两条路径进行匹配。我们发现这样的匹配会有多余匹配。因为本来我只会匹配/task/:id/service/url/tag，结果是我即匹配/task/:type/service/url/，也匹配/task/:id/service/url，只有匹配到最后的叶子节点才发现不匹配。怎么解决产生的多余匹配问题，teego框架已经给出方案。
+
 ​
 ​
 ![image](https://github.com/teemoyangyyq/TeeGo/assets/33918440/ee6bee1c-9e6d-4360-ad98-2dddf3f93441)
@@ -54,7 +55,10 @@ teeGo是类似gin的一个极简框架，路由分发性能是gin的3倍，是ir
 
 ![切片 3](https://github.com/teemoyangyyq/TeeGo/assets/33918440/20175d27-5ab9-4921-ba49-bced5f258d4d)
 
-
+   4.在路由前缀树建立成功后，遍历前缀树，做两件事：
+      4.1  把不带路径参数的路由放进一个全局map，key为路由index,value为路由索引
+      4.2 存两个路由索引map，key为路由索引。第一个value存路由对应所有方法，包括group分组方法，这些分组方法可以通过addroute叶子节点反查引擎;第二个value存路由对应路由路径参数数组，按先后顺序存放
+   5.浏览器输入路径，匹配时，先匹配不带参数的全局map路由索引，如果不存在再查询前缀树，获取路由索引，然后一一匹配路径方法，匹配到路径参数过程中记录路径值，可以用递归回溯解决
 
 
 ## 性能测试
