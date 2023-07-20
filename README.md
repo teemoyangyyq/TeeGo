@@ -22,7 +22,7 @@ teeGo是类似gin的一个极简框架，路由分发性能是gin的3倍，是ir
 ![image](https://github.com/teemoyangyyq/TeeGo/assets/33918440/20c633fe-c18e-4356-843b-4608bbbbaf2a)
 
 ### 第二点优化：
-&#x0009;对于/task/service/url/list, /task//service/url/info/:id, /task/service/url/tag,这三个路由，当浏览器输入 请求路径为/task/service/url/tag，那么需要四次匹配，分别匹配task，service，url，tag，这个时候对于没有路径参数的路由其实我们可以存个map，key为/task/service/url/tag，value为对应执行方法，这样可以一次匹配到位。对于有路径参数的，就只能一一匹配了
+&#x0009;对于/task/service/url/list, /task//service/url/info/:id, /task/service/url/tag,这三个路由，当浏览器输入 请求路径为/task/service/url/tag，那么需要四次匹配，分别匹配task，service，url，tag，这个时候对于没有路径参数的路由其实我们可以存个全局路由map，key为/task/service/url/tag，value为对应执行方法，这样匹配全局路由map可以一次匹配到位。对于有路径参数的，那就只能在前缀树上一一匹配了
 
 
 ​
@@ -31,7 +31,7 @@ teeGo是类似gin的一个极简框架，路由分发性能是gin的3倍，是ir
 
 
 ### 第三点优化：
-&#x0009;其实我们匹配到路由后，会获取上面我们所说的路由索引。 以这个索引为key，直接存储该路由的所有执行方法和路径参数，这样匹配后，我们拿到路由索引，直接在一个全局map中获取执行方法和路径参数返回和执行
+&#x0009;其实我们匹配到路由后，会获取上面我们所说的路由索引。在路径匹配前，我们遍历这个前缀树，初始化一下一个新的全局map，这个map以路由索引为key，value直接存储该路由的所有执行方法和路径参数。这样匹配后，我们拿到路由索引，直接在一个全局map中获取执行方法和路径参数返回和执行
 
 ### 路由匹配算法：
 ``` go
