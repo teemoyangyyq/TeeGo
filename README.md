@@ -53,7 +53,8 @@ teeGo是类似gin的一个极简框架，路由分发性能是gin的3倍，是ir
 
     3.每一个Engine会存储路径参数名称和父亲Engine（取名PreEngine）
 
-![切片 3](https://github.com/teemoyangyyq/TeeGo/assets/33918440/20175d27-5ab9-4921-ba49-bced5f258d4d)
+![切片 4 (1)](https://github.com/teemoyangyyq/TeeGo/assets/33918440/c532d61c-9baf-4c75-86fc-f202728f6eaa)
+
 
    4.在路由前缀树建立成功后，遍历前缀树，做两件事：
       4.1  把不带路径参数的路由放进一个全局map，key为路由index,value为路由索引
