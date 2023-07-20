@@ -55,12 +55,12 @@ teeGo支持路径参数
 
 ![切片 4 (1)](https://github.com/teemoyangyyq/TeeGo/assets/33918440/c532d61c-9baf-4c75-86fc-f202728f6eaa)
 
-
+``` go
    4.在路由前缀树建立成功后，遍历前缀树，做两件事：<br><br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  4.1  把不带路径参数的路由放进一个全局map，key为路由index,value为路由索引<br><br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  4.2 存两个路由索引map，key为路由索引。第一个value存路由对应所有方法，包括group分组方法，这些分组方法可以通过addroute叶子节点反查引擎;第二个value存路由对应路由路径参数数组，按先后顺序存放<br><br>
    5.浏览器输入路径，匹配时，先匹配不带参数的全局map路由索引，如果不存在再查询前缀树，获取路由索引，然后一一匹配路径方法，匹配到路径参数过程中记录路径值，可以用递归回溯解决
-
+```
 
 ## 性能测试
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;测试文件在test/目录下，三个一模一样的路由注册，分别是teego, iris,  gin,拥有相同控制器方法，中间件，为了测试性能，这些方法内什么操作都没有，仅仅测试框架路由分发性能
