@@ -48,7 +48,7 @@ teeGo是类似gin的一个极简框架，路由分发性能是gin的3倍，是ir
 ```
 ### 思路图解：
     1.矩形代表Engine结构体节点，每一个Group和AddRoute都会创建一个Engine，Engine的当前节点（取名CurNode）指向前缀树TreeNode节点；
-    2.椭圆代表TreeNode结构体节点，当TreeNode为叶子节点会记录它对应的addRoute的Engine节点（取名PreEngine）
+    2.椭圆代表TreeNode结构体节点（TreeNode是前缀树节点），当TreeNode为叶子节点会记录它对应的addRoute的Engine节点（取名PreEngine）
 ![切片 1](https://github.com/teemoyangyyq/TeeGo/assets/33918440/23df5862-0d88-4acf-8bfe-67d1f496f25d)
 
     3.每一个Engine会存储路径参数名称和父亲Engine（取名PreEngine）
