@@ -5,7 +5,7 @@ teeGo是类似gin的一个极简框架，路由分发性能是gin的3倍，是ir
 
 teeGo支持路径参数
 ## 背景
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;路由匹配算法一般使用前缀树进行匹配，如何优化匹配算法
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;teego为什么这么快？因为对前缀树路由匹配算法做了优化。路由匹配算法一般使用前缀树进行匹配，如何优化匹配算法
 ## 优化点：
 ### 第一点优化： 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;假设有三个路由 /task/:type/service/url/list, /task/:id/service/url/info, /task/:id/service/url/tag,
