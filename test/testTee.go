@@ -97,6 +97,6 @@ func UserController(c *tee.Context) {
 	
 }
 
-// func main(){
-// 	Testtee()
-// }
+ func main(){
+ 	Testtee()
+ }
