@@ -1,7 +1,7 @@
 package main
 
 import (
-	
+	"net/http"
 	tee "teego"
 )
 
@@ -94,7 +94,7 @@ func UserMiddle(c *tee.Context) {
 	
 }
 func UserController(c *tee.Context) {	
-	
+	c.JSON(http.StatusOK,"杨云强")
 }
 
  func main(){
