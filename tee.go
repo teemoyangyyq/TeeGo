@@ -25,7 +25,7 @@ type Engine struct {
 }
 
 // 前缀树节点，比如路由为/tee/api/:type/qq，那么路由会拆解成tee，api，:type，qq，四个节点,
-// 为了支持路径参数，把带:的路由（例如:type)统一存储成/,并且用map存储执行函数索引和参数对应关系，存储到PathParams
+
 type TreeNode struct {
 	PathUrl  map[string]*TreeNode //当前路由对应下一个路由节点的url为key，下一个路由节点为value
 	UrlValue string               // 当前路由url，例如api或qq
@@ -37,7 +37,7 @@ type TreeNode struct {
 	
 	PreEngine    *Engine
 }
-
+// 为了支持路径参数，把带:的路由（例如:type)统一存储成/,并且用map存储执行函数索引和参数对应关系，存储到RouteUrlParamsMap 
 var RouteUrlParamsMap = make(map[int][]string)
 var routeMap = make(map[string][]Handler)
 
