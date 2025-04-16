@@ -2,6 +2,7 @@
 
 teeGo是类似gin的一个极简框架，路由分发性能是gin的3倍，是iris的1.6倍
 ```go
+   cd Teego
    go run test/testTee.go
 ```
 浏览器输入http://127.0.0.1:8082/yyq/yy3
