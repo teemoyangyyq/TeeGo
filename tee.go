@@ -1,7 +1,6 @@
 package tee
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -94,10 +93,10 @@ func (curNode *TreeNode) Insert(routeStringSlice []string, index int, handlerInd
 // 要实现框架，需要实现监听的serveHTTP方法
 func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	routeString := req.RequestURI + "/" + req.Method
-	fmt.Println("eqflgikeh", routeString)
-	fmt.Printf("routeMap%+v",routeMap)
+	//fmt.Println("eqflgikeh", routeString)
+	//fmt.Printf("routeMap%+v",routeMap)
 	if v, ok := routeMap[routeString]; ok {
-	    fmt.Printf("cccccccc%+v",ok)
+	   // fmt.Printf("cccccccc%+v",ok)
 		handler, routeParam := v, make(map[string]interface{})
 		teeContext := Estart.pool.Get().(*TeeContext)
 		teeContext.Req = req
@@ -342,19 +341,19 @@ func CallBackTreeNode(e *Engine) ([]Handler, []string) {
 
 // 启动程序，监听http方法
 func (e *Engine) Start(address string) {
-	fmt.Println("krvh")
+//	fmt.Println("krvh")
 	RouteInit(e.RootNode, nil, true)
 
 	RouteDelete(e.RootNode, true)
 	RouteUrlParamsMap = nil
-	fmt.Printf("weefret = %+v", Estart)
+//	fmt.Printf("weefret = %+v", Estart)
 	srv := &http.Server{
 		Addr:         address,
 		Handler:      Estart,
 		ReadTimeout:  0,
 		WriteTimeout: 0,
 	}
-	fmt.Printf("ppppppp")
+	//fmt.Printf("ppppppp")
 
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("listen: %s\n", err)
