@@ -2,7 +2,7 @@ package main
 
 import (
 	"net/http"
-	tee "github.com/teemoyangyyq/Teego"
+	tee "github.com/teemoyangyyq/TeeGo"
 )
 
 //  测试代码
