@@ -24,14 +24,14 @@ func UserController(c *tee.Context) {
    
 ```
 浏览器输入http://127.0.0.1:8082/yyq/yy3
-
+![alt text](image.png)
 
 teeGo支持路径参数
 ## 背景
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;teego为什么这么快？因为对前缀树路由匹配算法做了优化。路由匹配算法一般使用前缀树进行匹配，如何优化匹配算法
 ## 优化点：
 ### 第一点优化： 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;假设有三个路由 /task/:type/service/url/list, /task/:id/service/url/info, /task/:id/service/url/tag,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs/p;假设有三个路由 /task/:type/service/url/list, /task/:id/service/url/info, /task/:id/service/url/tag,
 浏览器输入请求路径为/task/1/service/url/tag，会匹配路由/task/:id/service/url/tag，如果前缀树如下图所示，那么路由查找的时候，在匹配了task之后，:type和：id都会被匹配，之后还会分别匹配后面的service，会分两条路径进行匹配。我们发现这样的匹配会有多余匹配。因为本来我只会匹配/task/:id/service/url/tag，结果是我即匹配/task/:type/service/url/，也匹配/task/:id/service/url，只有匹配到最后的叶子节点才发现不匹配。怎么解决产生的多余匹配问题，teego框架已经给出方案。
 
 ​
