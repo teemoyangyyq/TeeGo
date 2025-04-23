@@ -2,8 +2,21 @@
 
 teeGo是类似gin的一个极简框架，路由分发性能是gin的3倍，是iris的1.6倍
 ```go
-   cd Teego
-   go run test/testTee.go
+package main
+
+import (
+	tee "github.com/teemoyangyyq/TeeGo"
+)
+
+//  测试代码
+
+func main() {
+	//  获取引擎
+	e := tee.NewEngine(&tee.TeeContext{})
+	e.GET("/yyq/yy3", UserController)
+	e.Start("127.0.0.1:8082")
+}
+   
 ```
 浏览器输入http://127.0.0.1:8082/yyq/yy3
 
@@ -44,11 +57,11 @@ teeGo支持路径参数
 	
 	v1 := e.Group("/task/:type")
 	{
-		v1.AddRoute("/service/url/list", UserController)
+		v1.Get("/service/url/list", UserController)
 	}
         v2 := ve.Group("/task/:id")
-	{       v2.AddRoute("/service/url/tag", UserController)
-		v2.AddRoute("/service/url/info/:id", UserController)
+	{       v2.Get("/service/url/tag", UserController)
+		v2.Get("/service/url/info/:id", UserController)
         }
 ```
 ### 思路图解：
@@ -172,14 +185,14 @@ func BenchmarkHi(b *testing.B) {
 package main
 
 import (
-	tee "teego/TeeGo"
+	tee "github.com/teemoyangyyq/TeeGo"
 )
 
 //  测试代码
 
 func main() {
 	//  获取引擎
-	e := tee.NewEngine()
+	e := tee.NewEngine(&tee.TeeContext)
 	e.Use(HiMiddle)
 	v0 := e.Group("/tee")
 	{

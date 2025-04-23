@@ -240,7 +240,7 @@ func (e *Engine) AddRoute(routeName string, handler ...Handler) *Engine {
 	return e
 }
 
-func NewEngine() *Engine {
+func NewEngine(teeContext *TeeContext) *Engine {
 	initTeeGo()
 	e := &Engine{
 		HandlerSlice: make([][]Handler, 0),
@@ -251,7 +251,7 @@ func NewEngine() *Engine {
 	Estart = e
 	Estart.pool = &sync.Pool{
         New: func() interface{} {
-            return &TeeContext{} // 初始化一个TeeContent实例
+            return teeContext // 初始化一个TeeContent实例
         },
     }
 	return e
