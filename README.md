@@ -16,6 +16,11 @@ func main() {
 	e.GET("/yyq/yy3", UserController)
 	e.Start("127.0.0.1:8082")
 }
+func UserController(c *tee.Context) {
+    tee.LogGet(c).Info("1234567=====")
+	c.Res.Write([]byte(c.Req.RequestURI+ "杨云强"))
+	
+}
    
 ```
 浏览器输入http://127.0.0.1:8082/yyq/yy3
@@ -62,7 +67,7 @@ teeGo支持路径参数
         v2 := ve.Group("/task/:id")
 	{       v2.Get("/service/url/tag", UserController)
 		v2.Get("/service/url/info/:id", UserController)
-        }
+    }
 ```
 ### 思路图解：
     1.矩形代表Engine结构体节点，每一个Group和AddRoute都会创建一个Engine，Engine的当前节点（取名CurNode）指向前缀树TreeNode节点；
@@ -192,7 +197,7 @@ import (
 
 func main() {
 	//  获取引擎
-	e := tee.NewEngine(&tee.TeeContext)
+	e := tee.NewEngine(&tee.TeeContext{})
 	e.Use(HiMiddle)
 	v0 := e.Group("/tee")
 	{
@@ -243,6 +248,11 @@ func UserMiddle(c *tee.Context) {
 	c.Next()
 	//fmt.Println("after UserMiddle")
 
+}
+func UserController(c *tee.Context) {
+  //  tee.LogGet(c).Info("1234567=====")
+//	c.Res.Write([]byte(c.Req.RequestURI+ "杨云强"))
+	
 }
 
 ```
