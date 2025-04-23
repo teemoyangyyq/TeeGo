@@ -18,7 +18,7 @@ type Engine struct {
 	// 的是前缀树对应的当前路由，group后添加的路由，从当前节点开始添加
 	RootNode     *TreeNode   // 路由根节点
 	HandlerSlice [][]Handler // 中间件，控制器方法数组
-	pool         sync.Pool
+	pool         *sync.Pool
 	PreIndex     int
 	Index        int
 	PreEngine    *Engine
