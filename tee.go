@@ -250,7 +250,11 @@ func NewEngine() *Engine {
 		UrlParamsMap: make(map[int][]string),
 	}
 	Estart = e
-	Estart.pool.Put(&TeeContext{})
+	Estart.pool = &sync.Pool{
+        New: func() interface{} {
+            return &TeeContext{} // 初始化一个TeeContent实例
+        },
+    }
 	return e
 }
 
