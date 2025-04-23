@@ -1,4 +1,4 @@
-module teego
+module github.com/teemoyangyyq/teego
 
 go 1.21.4
 
