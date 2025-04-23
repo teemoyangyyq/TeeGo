@@ -1,13 +1,14 @@
 package tee
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
 	"sync"
 )
 
-type Handler func(context *Context)
+type Handler func(teeContext *TeeContext)
 
 var GroupRouteInndex = 1
 
@@ -31,22 +32,20 @@ type TreeNode struct {
 	UrlValue string               // 当前路由url，例如api或qq
 	// 当前路由为:type,:id等路径方式，存储参数，key为带有路由对应发放，
 	// value为带有路径参数的url
-	End          bool      // 是否是路url由的重点
-	Index        int       // 当前执行的路由方法索引
-	PreIndex     int       // 当前节点url对应的中间件
-	
-	PreEngine    *Engine
+	End       bool // 是否是路url由的重点
+	Index     int  // 当前执行的路由方法索引
+	PreIndex  int  // 当前节点url对应的中间件
+	PreEngine *Engine
 }
-// 为了支持路径参数，把带:的路由（例如:type)统一存储成/,并且用map存储执行函数索引和参数对应关系，存储到RouteUrlParamsMap 
-var RouteUrlParamsMap = make(map[int][]string)
-var routeMap = make(map[string][]Handler)
+
+// 为了支持路径参数，把带:的路由（例如:type)统一存储成/,并且用map存储执行函数索引和参数对应关系，存储到RouteUrlParamsMap
+var RouteUrlParamsMap map[int][]string
+var routeMap map[string][]Handler
 
 // 前缀树路由根节点
-var Root = &TreeNode{
-	PathUrl: make(map[string]*TreeNode),
-}
+var Root *TreeNode
 
-var Estart = GetNewEngine()
+var Estart *Engine
 
 // 插入一个前缀树路由
 func (curNode *TreeNode) Insert(routeStringSlice []string, index int, handlerIndex int, e *Engine, routeindex int) *TreeNode {
@@ -60,9 +59,8 @@ func (curNode *TreeNode) Insert(routeStringSlice []string, index int, handlerInd
 		curNode = v
 	} else {
 		newNode := &TreeNode{
-			PathUrl:      make(map[string]*TreeNode),
-			UrlValue:     curV,
-			
+			PathUrl:  make(map[string]*TreeNode),
+			UrlValue: curV,
 		}
 
 		// 上一个节点的map指向刚创建的节点
@@ -79,7 +77,6 @@ func (curNode *TreeNode) Insert(routeStringSlice []string, index int, handlerInd
 		// 如果是group，代表路由还没结束
 		if handlerIndex == 0 && !curNode.End {
 			curNode.End = false
-
 			return curNode
 		}
 		curNode.PreIndex = routeindex
@@ -96,35 +93,36 @@ func (curNode *TreeNode) Insert(routeStringSlice []string, index int, handlerInd
 
 // 要实现框架，需要实现监听的serveHTTP方法
 func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-
 	routeString := req.RequestURI + "/" + req.Method
-
+	fmt.Println("eqflgikeh", routeString)
+	fmt.Printf("routeMap%+v",routeMap)
 	if v, ok := routeMap[routeString]; ok {
+	    fmt.Printf("cccccccc%+v",ok)
 		handler, routeParam := v, make(map[string]interface{})
-		context := Estart.pool.Get().(*Context)
-		context.Req = req
-		context.Res = w
-		context.RouteParamMap = routeParam
-		context.Index = -1
-		context.HandlerSlice = handler
-		context.Next()
-		w = context.Res
-		Estart.pool.Put(context)
+		teeContext := Estart.pool.Get().(*TeeContext)
+		teeContext.Req = req
+		teeContext.Res = w
+		teeContext.RouteParamMap = routeParam
+		teeContext.Index = -1
+		teeContext.HandlerSlice = handler
+		teeContext.Next()
+		w = teeContext.Res
+		Estart.pool.Put(teeContext)
 	} else {
 		isMatch, handler, routeParam := Estart.MatchRoute(routeString)
 		if !isMatch {
 			return
 		}
-		context := Estart.pool.Get().(*Context)
-		context.Req = req
-		context.Res = w
-		context.RouteParamMap = routeParam
-		context.Index = -1
-		context.HandlerSlice = handler
+		teeContext := Estart.pool.Get().(*TeeContext)
+		teeContext.Req = req
+		teeContext.Res = w
+		teeContext.RouteParamMap = routeParam
+		teeContext.Index = -1
+		teeContext.HandlerSlice = handler
 
-		context.Next()
-		w = context.Res
-		Estart.pool.Put(context)
+		teeContext.Next()
+		w = teeContext.Res
+		Estart.pool.Put(teeContext)
 	}
 
 	// 获取匹配路由方法
@@ -224,6 +222,16 @@ func (curNode *TreeNode) Match(routeStringSlice []string, index int, RouteParamM
 	}
 	return false, 0, 0
 }
+func initTeeGo() {
+	RouteUrlParamsMap = make(map[int][]string)
+	routeMap = make(map[string][]Handler)
+
+	// 前缀树路由根节点
+	Root = &TreeNode{
+		PathUrl: make(map[string]*TreeNode),
+	}
+
+}
 
 // 增加路由
 func (e *Engine) AddRoute(routeName string, handler ...Handler) *Engine {
@@ -234,19 +242,22 @@ func (e *Engine) AddRoute(routeName string, handler ...Handler) *Engine {
 }
 
 func NewEngine() *Engine {
-	return &Engine{
+	initTeeGo()
+	e := &Engine{
 		HandlerSlice: make([][]Handler, 0),
 		RootNode:     Root,
 		CurNode:      Root,
 		UrlParamsMap: make(map[int][]string),
 	}
-
+	Estart = e
+	Estart.pool.Put(&TeeContext{})
+	return e
 }
 
-func GetNewEngine() *Engine {
-	e := NewEngine()
+func GetNewEngine(e *Engine) *Engine {
+	//e = e.NewRootEngine()
 	e.pool.New = func() interface{} {
-		return &Context{}
+		return &TeeContext{}
 	}
 	return e
 }
@@ -326,18 +337,20 @@ func CallBackTreeNode(e *Engine) ([]Handler, []string) {
 }
 
 // 启动程序，监听http方法
-func Start(address string) {
-	RouteInit(Root, nil, true)
+func (e *Engine) Start(address string) {
+	fmt.Println("krvh")
+	RouteInit(e.RootNode, nil, true)
 
-	RouteDelete(Root, true)
+	RouteDelete(e.RootNode, true)
 	RouteUrlParamsMap = nil
-
+	fmt.Printf("weefret = %+v", Estart)
 	srv := &http.Server{
 		Addr:         address,
 		Handler:      Estart,
 		ReadTimeout:  0,
 		WriteTimeout: 0,
 	}
+	fmt.Printf("ppppppp")
 
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("listen: %s\n", err)

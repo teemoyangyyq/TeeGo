@@ -32,7 +32,7 @@ func init() {
 }
 
 // Get 获取日志实例
-func LogGet(c *Context) (log Logger) {
+func LogGet(c *TeeContext) (log Logger) {
 	//非router请求会nil pointer，这里做一下失败处理
 	defer func() {
 		if err := recover(); err != nil {
@@ -113,9 +113,9 @@ type LogFormatterParams struct {
 	StatusCode int
 	// Latency is how much time the server cost to process a certain request.
 	Latency time.Duration
-	// ClientIP equals Context's ClientIP method.
+	// ClientIP equals teeContext's ClientIP method.
 	ClientIP string
-	// ServerIP equals Context's ServerIP method.
+	// ServerIP equals teeContext's ServerIP method.
 	ServerIP string
 	// Method is the HTTP method given to the request.
 	Method string
@@ -131,11 +131,11 @@ type LogFormatterParams struct {
 	Body string
 	// isError
 	isError bool
-	// Keys are the keys set on the request's context.
+	// Keys are the keys set on the request's teeContext.
 	Keys map[string]interface{}
 }
 
-func RecoveryWithWriter(c *Context, err interface{}) {
+func RecoveryWithWriter(c *TeeContext, err interface{}) {
 	// Check for a broken connection, as it is not really a
 	// condition that warrants a panic stack trace.
 	var brokenPipe bool
@@ -157,7 +157,7 @@ func RecoveryWithWriter(c *Context, err interface{}) {
 	}
 
 	//panic转Error级别日志
-//	LogGet(c).WithField("is_panic", true).Error(err)
+	//	LogGet(c).WithField("is_panic", true).Error(err)
 
 	// If the connection is dead, we can't write a status to it.
 	if brokenPipe {
@@ -172,7 +172,7 @@ func RecoveryWithWriter(c *Context, err interface{}) {
 }
 
 // 处理返回数据,TODO:放到上下文中
-func (param *LogFormatterParams) getBody(c *Context, b []byte) {
+func (param *LogFormatterParams) getBody(c *TeeContext, b []byte) {
 	if param.StatusCode < http.StatusBadRequest {
 		return
 	}
@@ -188,7 +188,7 @@ func (param *LogFormatterParams) getBody(c *Context, b []byte) {
 	return
 }
 
-func getRequestBody(c *Context) string {
+func getRequestBody(c *TeeContext) string {
 	method := c.Req.Method
 
 	if method == "GET" {
@@ -204,8 +204,7 @@ func getRequestBody(c *Context) string {
 
 // Logger is the logrus logger handler
 func TeeLogger() Handler {
-	return func(c *Context) {
-		
+	return func(c *TeeContext) {
 
 		c.Set(STARTMICROTIME, time.Now().UnixNano()/1000000)
 
@@ -224,7 +223,6 @@ func TeeLogger() Handler {
 			path = path + "?" + raw
 		}
 
-	
 		//Trace
 		traceID := WithTraceID(c)
 		WithStartTime(c, start)
@@ -250,7 +248,7 @@ func TeeLogger() Handler {
 		param.BodySize = c.Size
 		param.UserAgent = c.Req.UserAgent()
 
-		param.getBody(c,[]byte(""))
+		param.getBody(c, []byte(""))
 
 		param.LogFormatter()
 	}
