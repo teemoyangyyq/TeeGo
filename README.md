@@ -267,7 +267,7 @@ type ResData struct {
 }
 
 
-func UserController(c *tee.Context) {
+func UserController(c *tee.TeeContext) {
         // 获取路径参数
 	idint := c.PathParamInt("id")
         idstring := c.PathParamString("id")
@@ -296,7 +296,7 @@ package main
 
 import (
 	"fmt"
-	tee "teego"
+	tee "github.com/teemoyangyyq/TeeGo"
 )
 
 //  测试代码
