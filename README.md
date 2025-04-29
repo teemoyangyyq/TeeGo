@@ -24,7 +24,7 @@ func UserController(c *tee.Context) {
    
 ```
 浏览器输入http://127.0.0.1:8082/yyq/yy3
-![alt text](image.png)
+
 
 teeGo支持路径参数
 ## 背景
